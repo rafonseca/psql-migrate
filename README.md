@@ -26,7 +26,6 @@ It is a three column csv  without headers. It describes the graphs of migrations
 init, my first state, some_script.sql
 ```
 
-Notes: quoting is not supported. we trim leading spaces.
 
 The order of the entries in the file does not matter.
 

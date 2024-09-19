@@ -31,12 +31,6 @@ CREATE temp TABLE edges (
 );
 
 \copy edges from dependencies.csv with  csv;
-UPDATE
-    edges
-SET
-    source = trim(source),
-    target = trim(target),
-    script_name = trim(script_name);
 
 TABLE edges;
 
