@@ -20,10 +20,11 @@ In the same folder of `migrate.sql`, put the following files: `dependencies.csv`
 
 ### dependencies.csv
 
-It is a three column csv  without headers. It describes the graphs of migrations where the edges are the migration scripts. The first two columns are *source* and *target* states and can be arbitrary strings (excluding comma of course). By default, the initial state is `init`. So the first migration to run should be of the form:
+It is a three column csv  with headers. It describes the graphs of migrations where the edges are the migration scripts. The first two columns are *source* and *target* states and can be arbitrary strings (excluding comma of course). By default, the initial state is `init`. So the first migration to run should be of the form:
 
 ``` csv
-init, my first state, some_script.sql
+source,target,script_name
+init,my first state,some_script.sql
 ```
 
 

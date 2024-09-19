@@ -30,10 +30,10 @@ CREATE temp TABLE edges (
     script_name text
 );
 
-\copy edges from dependencies.csv with  csv;
 
 TABLE edges;
 
+\copy migrations.edges from dependencies.csv with csv header;
 -- assert all scripts exist
 SELECT DISTINCT
     format('\set  file_name %s \if `test -f :file_name && echo t || echo f` \echo :file_name exists \else \echo :file_name does not exists \set file_not_found t \endif', script_name)
