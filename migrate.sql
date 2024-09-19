@@ -1,84 +1,134 @@
 -- configure psql to interrupt script if any comamand fails
 \set ON_ERROR_STOP on
-
 -- create migration tables if not already present
-create schema if not exists migrations;
-create table if not exists migrations.log
-(
-  state text primary key,
-  success bool default true,
-  created_at timestamptz default  now()
+CREATE SCHEMA IF NOT EXISTS migrations;
+
+CREATE TABLE IF NOT EXISTS migrations.log (
+    state text PRIMARY KEY,
+    success bool DEFAULT TRUE,
+    created_at timestamptz DEFAULT now()
 );
 
 -- insert special initial state if not already present
-insert into migrations.log values('init') on conflict (state) do nothing;
+INSERT INTO migrations.log
+    VALUES ('init')
+ON CONFLICT (state)
+    DO NOTHING;
 
 -- create type state
 -- this is only used to access the field of an anonymous record (postgres bug)
-create table if not exists state (state text);
-
+CREATE TABLE IF NOT EXISTS state (
+    state text
+);
 
 -- create temporary edges table and ingest csv
-drop table if exists edges cascade;
-create temp table edges (
-  source text,
-  target text,
-  script_name text
-  );
+DROP TABLE IF EXISTS edges CASCADE;
+
+CREATE temp TABLE edges (
+    source text,
+    target text,
+    script_name text
+);
+
 \copy edges from dependencies.csv with  csv;
-update edges set source = trim(source),
-                 target = trim(target),
-		 script_name = trim(script_name);
-table edges;		 
+UPDATE
+    edges
+SET
+    source = trim(source),
+    target = trim(target),
+    script_name = trim(script_name);
+
+TABLE edges;
 
 -- assert all scripts exist
-select distinct format('\set  file_name %s \if `test -f :file_name && echo t || echo f` \echo :file_name exists \else \echo :file_name does not exists \set file_not_found t \endif',script_name) from edges \g (tuples_only) temp_file_check.sql
+SELECT DISTINCT
+    format('\set  file_name %s \if `test -f :file_name && echo t || echo f` \echo :file_name exists \else \echo :file_name does not exists \set file_not_found t \endif', script_name)
+FROM
+    edges \g (tuples_only) temp_file_check.sql
+
 \set file_not_found f
 \i temp_file_check.sql
 \if :file_not_found
-STOP. one or more files were not found
+select raise_error;
+
 \endif
 \! rm temp_file_check.sql
-
 -- pick target state from file
 \set target `cat default_target`
 \echo Target State: :target
-
 -- pick current state from db
-select state as source from migrations.log where success order by created_at desc limit 1 \gset
+SELECT
+    state AS source
+FROM
+    migrations.log
+WHERE
+    success
+ORDER BY
+    created_at DESC
+LIMIT 1 \gset
+
 \echo Current State: :source
-
-
 -- view that generates all paths from current state to target state
-drop view if exists graph;
-create temp view graph as(
-with recursive graph(node) as (
-  select :'source'
-  union
-  select edges.target from graph join edges on  graph.node=edges.source
-  ) cycle node set  is_cycle using path
-  select node, path::text::state[] from graph where node=:'target' order by cardinality(path) 
-);
+DROP VIEW IF EXISTS graph;
+
+CREATE temp VIEW graph AS (
+    WITH RECURSIVE graph (
+        node
+) AS (
+        SELECT
+            :'source'
+        UNION
+        SELECT
+            edges.target
+        FROM
+            graph
+            JOIN edges ON graph.node = edges.source)
+        CYCLE node SET is_cycle USING path
+        SELECT
+            node, path::text::state[] FROM graph
+            WHERE
+                node = :'target' ORDER BY cardinality(path));
 
 -- show path
 \echo path:
-select path from graph limit 1;
+SELECT
+    path
+FROM
+    graph
+LIMIT 1;
 
--- set control variables 
-select :'source' = :'target' as finished \gset
-select exists (select from graph) as there_is_path \gset
+-- set control variables
+SELECT
+    :'source' = :'target' AS finished \gset
+
+SELECT
+    EXISTS (
+        SELECT
+        FROM
+            graph) AS there_is_path \gset
 
 \if :finished
-  \echo Finished!
+\echo Finished!
 \elif :there_is_path
-  begin;
-   select path[2].state next_state from graph  limit 1 \gset
-   select script_name from edges where source=:'source' and target=:'next_state' \gset
-   \ir :script_name
-   insert into migrations.log values(:'next_state');
-  commit;
-  \ir migrate.sql
+BEGIN;
+SELECT
+    path[2].state next_state
+FROM
+    graph
+LIMIT 1 \gset
+SELECT
+    script_name
+FROM
+    edges
+WHERE
+    source = :'source'
+    AND target = :'next_state' \gset
+\ir :script_name
+INSERT INTO migrations.log
+    VALUES (:'next_state');
+COMMIT;
+
+\ir migrate.sql
 \else
-  \echo There is no migration path from :source to :target
+\echo There is no migration path from :source to :target
 \endif
-  
