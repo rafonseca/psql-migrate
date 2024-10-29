@@ -58,6 +58,12 @@ The graph described in `dependencies.csv` does not persist on the DB.
 
 ## TODO
 
+- [x] Define common Data Definition Log schema
+
+- [ ] Implement script to run ad-hoc migration populating ddlog.sql schema
+
+- [ ] Rewrite docs and refactor code to use ddlog.sql
+
 - [ ] Improve docs/Create example
 
 - [ ] Define alternatives for defaut_target definition
