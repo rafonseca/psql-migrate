@@ -1,0 +1,3 @@
+[submodule "ddlog.sql"]
+	path = ddlog.sql
+	url = https://github.com/rafonseca/ddlog.sql
