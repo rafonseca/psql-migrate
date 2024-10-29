@@ -1,5 +1,0 @@
-source,target,script_name
-init,first-migration,run1.sql
-first-migration,second-state,run2.sql
-init,second-state,straight2.sql
-second-state,third-state,straight2.sql
