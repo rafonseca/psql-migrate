@@ -1,0 +1,3 @@
+#!/usr/bin/bash
+
+psql  $@ -f apply-adhoc-migration.sql
