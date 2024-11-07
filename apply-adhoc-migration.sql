@@ -8,9 +8,10 @@
     \qecho executing :sql_path
     \i :sql_path
 
-    -- create entry in ddlog using \copy. then, set success=true 
-    \set command '\\copy ddlog.ddlog(sql) from ' :sql_path
-    :command
+    -- create entry in ddlog using \copy. then, set success=true
+    \set sql_script `cat $SQL_PATH`
+    insert into ddlog.ddlog(sql) values (:'sql_script');
+
     -- we can use now() as a filter because statements are in same transaction
 
     update ddlog.ddlog set 
