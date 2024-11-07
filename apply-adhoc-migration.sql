@@ -10,20 +10,17 @@
     \echo 'error: new_state already exists in ddlog'
   \else  
     \if :{?sql_path}
+      -- run migration and register on ddlog in same transaction
       begin;
-      -- run migration
+      
       \qecho executing :sql_path
       \i :sql_path
-      -- create entry in ddlog using \copy. then, set success=true
+
       \set sql_script `cat $SQL_PATH`
-      insert into ddlog.ddlog(sql) values (:'sql_script');
+      
+      insert into ddlog.ddlog (sql,           new_state,               success)
+      values                  (:'sql_script', nullif(:'new_state',''), true);
 
-      -- we can use now() as a filter because statements are in same transaction
-
-      update ddlog.ddlog set 
-	success=true,
-	new_state=nullif(:'new_state','')
-	where applied_at=now();
       commit;
     \else
       \echo 'error: should set environment variable SQL_PATH'
