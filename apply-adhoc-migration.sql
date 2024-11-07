@@ -3,6 +3,7 @@
 \getenv sql_path SQL_PATH
 
 \if :{?new_state}
+  -- TODO: handle revert migration
   select exists
   (select from ddlog.ddlog where new_state=nullif(:'new_state',''))
   as new_state_not_exists \gset
