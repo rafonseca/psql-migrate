@@ -24,6 +24,7 @@
 
       commit;
     \else
+      -- TODO: handle env variables errors in bash script
       \echo 'error: should set environment variable SQL_PATH'
     \endif
   \endif
