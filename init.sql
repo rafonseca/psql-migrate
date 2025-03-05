@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS migrations.state (
     state text
 );
 
--- TODO: add schema in migrations.edges
 -- create  edges table 
 CREATE  TABLE IF NOT EXISTS migrations.edges (
+    schema text,
     source text,
     target text,
     script_path text
@@ -21,7 +21,7 @@ CREATE  TABLE IF NOT EXISTS migrations.edges (
 
 
 -- function that generates all paths from current state to target state
-CREATE OR REPLACE FUNCTION migrations.graph (source text, target text) returns setof migrations.state[]
+CREATE OR REPLACE FUNCTION migrations.graph ("schema" text, source text, target text) returns setof migrations.state[]
 LANGUAGE sql BEGIN ATOMIC;
 WITH RECURSIVE graph (
     node
@@ -33,10 +33,12 @@ WITH RECURSIVE graph (
         migrations.edges.target
     FROM
         graph
-        JOIN migrations.edges ON graph.node = migrations.edges.source)
+        JOIN migrations.edges ON graph.node = migrations.edges.source
+    WHERE
+	migrations.edges.schema = graph.schema)
     CYCLE node SET is_cycle USING path
 SELECT
     path::text::migrations.state[]  FROM graph
-    WHERE node = target
+    WHERE graph.node = target
     ORDER BY cardinality(path);
 END;
