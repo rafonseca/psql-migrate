@@ -4,11 +4,6 @@
 -- create migration tables if not already present
 CREATE SCHEMA IF NOT EXISTS migrations;
 
-CREATE TABLE IF NOT EXISTS migrations.log (
-    state text PRIMARY KEY,
-    success bool DEFAULT TRUE,
-    created_at timestamptz DEFAULT now()
-);
 
 -- create type state
 -- this is only used to access the field of an anonymous record (postgres bug)
@@ -16,18 +11,12 @@ CREATE TABLE IF NOT EXISTS migrations.state (
     state text
 );
 
-
--- insert special initial state if not already present
-INSERT INTO migrations.log
-    VALUES ('init')
-ON CONFLICT (state)
-    DO NOTHING;
-
--- create temporary edges table and ingest csv
+-- TODO: add schema in migrations.edges
+-- create  edges table 
 CREATE  TABLE IF NOT EXISTS migrations.edges (
     source text,
     target text,
-    script_name text
+    script_path text
 );
 
 
