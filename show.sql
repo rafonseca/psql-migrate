@@ -1,9 +1,9 @@
 -- configure psql to interrupt script if any comamand fails
 \set ON_ERROR_STOP on
 
-\echo Importing dependencies.csv
+\echo Importing spec.json
 TRUNCATE TABLE migrations.edges;
-\copy migrations.edges from dependencies.csv with csv header;
+\ir read_migrations.sql
 
 -- pick target state from file
 \echo Setting target
